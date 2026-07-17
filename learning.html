@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillTube Course Player - Switch between Python, Web Dev, DSA, and AI courses. Play YouTube lessons, watch details, and save persistent notes.">
+  <title>Learning Workspace - SkillTube</title>
+  <link rel="stylesheet" href="style.css?v=2.0">
+  
+  <style>
+    /* Theme Color Customizations */
+    :root {
+      --bg-dark: #020c1b;
+      --bg-darker: #000814;
+      --bg-card: rgba(10, 25, 47, 0.6);
+      --bg-card-hover: rgba(17, 34, 64, 0.85);
+      --primary: #ff4d4d;
+      --primary-hover: #e63939;
+      --primary-glow: rgba(255, 77, 77, 0.3);
+      --border-color: rgba(255, 255, 255, 0.05);
+      
+      /* Active Skill Pill Colors */
+      --color-python: #4cc9f0;
+      --color-webdev: #06d6a0;
+      --color-dsa: #ffd166;
+      --color-aiml: #ff8c42;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 50% 0%, rgba(255, 255, 255, 0.05) 0px, transparent 55%),
+        radial-gradient(at 0% 100%, rgba(10, 25, 47, 0.5) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(0, 8, 20, 0.7) 0px, transparent 50%);
+    }
+
+    /* Logo Branding */
+    .logo {
+      background: linear-gradient(135deg, #ffffff 40%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+    .logo span {
+      color: var(--primary);
+      -webkit-text-fill-color: initial;
+    }
+
+    /* Skill Selector Bar */
+    .skill-selector-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+      margin-bottom: 28px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .skill-pill {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 10px 18px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .skill-pill:hover {
+      border-color: rgba(255,255,255,0.15);
+      color: var(--text-main);
+      transform: translateY(-1px);
+    }
+
+    /* Skill pill active fills */
+    .skill-pill.active.pill-python {
+      background: var(--color-python);
+      border-color: var(--color-python);
+      color: #07090e;
+      box-shadow: 0 4px 15px rgba(76, 201, 240, 0.3);
+    }
+
+    .skill-pill.active.pill-webdev {
+      background: var(--color-webdev);
+      border-color: var(--color-webdev);
+      color: #07090e;
+      box-shadow: 0 4px 15px rgba(6, 214, 160, 0.3);
+    }
+
+    .skill-pill.active.pill-dsa {
+      background: var(--color-dsa);
+      border-color: var(--color-dsa);
+      color: #07090e;
+      box-shadow: 0 4px 15px rgba(255, 209, 102, 0.3);
+    }
+
+    .skill-pill.active.pill-aiml {
+      background: var(--color-aiml);
+      border-color: var(--color-aiml);
+      color: #07090e;
+      box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+    }
+
+    /* Level progress stat strip */
+    .progress-stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .level-progress-stat {
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 10px 20px;
+      border-radius: var(--border-radius-sm);
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .level-progress-stat span {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    /* Video Cards Grid */
+    .video-grid-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .video-item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all var(--transition-normal);
+      position: relative;
+    }
+
+    .video-item-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .video-thumb-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: var(--bg-darker);
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .video-thumbnail {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .video-item-card:hover .video-thumbnail {
+      transform: scale(1.05);
+    }
+
+    /* Complete badge on thumbnail */
+    .done-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #06d6a0;
+      color: #07090e;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 4px;
+      z-index: 5;
+      box-shadow: 0 4px 10px rgba(6, 214, 160, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Hover overlay play button */
+    .thumb-play-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 5, 9, 0.5);
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      transition: opacity var(--transition-fast);
+    }
+
+    .video-thumb-container:hover .thumb-play-overlay {
+      opacity: 1;
+    }
+
+    .play-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--primary-glow);
+      transition: transform var(--transition-fast);
+    }
+
+    .video-thumb-container:hover .play-circle {
+      transform: scale(1.1);
+    }
+
+    .play-icon-svg {
+      width: 16px;
+      height: 16px;
+      fill: #ffffff;
+      margin-left: 2px;
+    }
+
+    .video-card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .video-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.4;
+      height: 2.7rem; /* Fixed height for alignment */
+      cursor: pointer;
+    }
+
+    .video-card-title:hover {
+      color: var(--primary);
+    }
+
+    .video-card-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .video-card-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-color);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    .card-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .card-checkbox-label input {
+      accent-color: #06d6a0;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .card-checkbox-label input:checked + span {
+      color: #06d6a0;
+    }
+
+    /* Video Player Modal Styling */
+    .player-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 5, 9, 0.9);
+      backdrop-filter: blur(15px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-normal);
+    }
+
+    .player-modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .player-modal-content {
+      background: #111118;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--border-radius-lg);
+      width: 90%;
+      max-width: 900px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+      transform: translateY(30px);
+      transition: transform var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .player-modal-overlay.active .player-modal-content {
+      transform: translateY(0);
+    }
+
+    .player-modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .player-modal-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .player-modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .player-modal-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .player-modal-close {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      line-height: 1;
+      transition: color var(--transition-fast);
+    }
+
+    .player-modal-close:hover {
+      color: var(--primary);
+    }
+
+    .player-modal-body {
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 24px;
+    }
+
+    .modal-video-wrapper {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      background: #000000;
+      border-radius: var(--border-radius-md);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-video-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .modal-notes-sidebar {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .modal-notes-label {
+      font-family: var(--font-headings);
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .modal-notes-area {
+      width: 100%;
+      flex-grow: 1;
+      min-height: 160px;
+      background: var(--bg-darker);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-sm);
+      color: var(--text-main);
+      padding: 12px;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      resize: none;
+      line-height: 1.5;
+    }
+
+    .modal-notes-area:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .player-modal-footer {
+      padding: 18px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0c0c12;
+    }
+
+    /* Responsiveness */
+    @media (max-width: 992px) {
+      .video-grid-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .player-modal-body {
+        grid-template-columns: 1fr;
+      }
+      .modal-notes-area {
+        min-height: 120px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .video-grid-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Glassmorphic Header -->
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span>▶</span> SkillTube</a>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="skills.html">Skills</a></li>
+          <li><a href="learning.html" class="active">Learn</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </nav>
+      <div class="nav-controls" style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary btn-small" onclick="logout()" style="color: var(--primary); border-color: rgba(255, 77, 77, 0.2);">
+          🚪 Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Container -->
+  <main>
+    <!-- Firebase Sync Indicator Banner -->
+    <div class="sync-banner" id="firebase-sync-banner">
+      <div class="sync-status">
+        <span class="sync-dot offline"></span>
+        <span class="sync-text">Local Storage Mode</span>
+      </div>
+    </div>
+
+    <!-- Skill Selector Bar -->
+    <div class="skill-selector-bar" id="skill-pills-bar">
+      <button class="skill-pill active pill-python" data-skill="python">🐍 Python</button>
+      <button class="skill-pill pill-webdev" data-skill="webdev">🌐 Web Development</button>
+      <button class="skill-pill pill-dsa" data-skill="dsa">🧮 DSA Core</button>
+      <button class="skill-pill pill-aiml" data-skill="aiml">🧠 AI & Machine Learning</button>
+    </div>
+
+    <!-- Track Progress Status Bar -->
+    <div class="progress-stat-row">
+      <div class="level-progress-stat">
+        <span>Track Curriculum Progress</span>
+        <span id="level-stat-text">0 of 12 completed · 0%</span>
+      </div>
+    </div>
+
+    <!-- Video Cards Grid (3 Columns) -->
+    <section class="video-grid-container" id="video-cards-grid">
+      <!-- Injected Dynamically by JS -->
+      <div style="grid-column: span 3; text-align: center; padding: 40px; color: var(--text-muted);">
+        Loading video workspace...
+      </div>
+    </section>
+  </main>
+
+  <!-- Video Iframe modal player -->
+  <div class="player-modal-overlay" id="player-modal" onclick="handleOutsideModalClick(event)">
+    <div class="player-modal-content">
+      <div class="player-modal-header">
+        <div class="player-modal-title-wrap">
+          <h2 class="player-modal-title" id="modal-video-title">Class Title</h2>
+          <span class="player-modal-meta" id="modal-video-meta">Duration: 00:00 · YouTube Academy</span>
+        </div>
+        <button class="player-modal-close" onclick="closeVideoModal()">&times;</button>
+      </div>
+      
+      <div class="player-modal-body">
+        <!-- Video Player Frame -->
+        <div class="modal-video-wrapper">
+          <div id="modal-iframe"></div>
+        </div>
+        
+        <!-- Notes Sidebar -->
+        <div class="modal-notes-sidebar">
+          <label class="modal-notes-label">
+            <span>📝</span> Notes Workspace
+          </label>
+          <textarea class="modal-notes-area" id="modal-notes-area" placeholder="Write key concepts, commands, or thoughts here..." oninput="autosaveNotes()"></textarea>
+        </div>
+      </div>
+      
+      <div class="player-modal-footer" style="justify-content: flex-end;">
+        <button class="btn btn-primary btn-small" onclick="closeVideoModal()">
+          ✓ Close Workspace
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 SkillTube. Designed for continuous developer skill cultivation.</p>
+  </footer>
+
+  <!-- YouTube Player API script load -->
+  <script>
+    // Load YouTube Player API dynamically
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    let ytApiReady = false;
+    window.onYouTubeIframeAPIReady = function() {
+      ytApiReady = true;
+    };
+  </script>
+
+  <!-- Script Declarations -->
+  <script src="videos.js?v=2.0"></script>
+  <script src="app.js?v=2.1"></script>
+
+  <!-- Interactive Workspace Controller -->
+  <script>
+    let workspaceSkill = "python";
+    let modalActiveVideoId = null;
+    let ytPlayer = null;
+
+    function initUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const skillParam = params.get("skill");
+      const videoParam = params.get("video");
+
+      if (skillParam && window.videoData[skillParam]) {
+        workspaceSkill = skillParam;
+      }
+      
+      if (videoParam) {
+        setTimeout(() => {
+          openVideoModal(videoParam);
+        }, 500);
+      }
+    }
+
+    function updateSelectorsUi() {
+      document.querySelectorAll(".skill-pill").forEach(pill => {
+        const skill = pill.getAttribute("data-skill");
+        if (skill === workspaceSkill) {
+          pill.classList.add("active");
+        } else {
+          pill.classList.remove("active");
+        }
+      });
+    }
+
+    function renderWorkspaceGrid() {
+      const grid = document.getElementById("video-cards-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      const skillData = window.videoData[workspaceSkill];
+      if (!skillData) return;
+
+      const videos = skillData.videos || [];
+
+      let totalCount = videos.length;
+      let completedCount = 0;
+      
+      videos.forEach(v => {
+        if (window.trackerState.completedVideos[v.id]) {
+          completedCount++;
+        }
+      });
+
+      const pct = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+      document.getElementById("level-stat-text").innerHTML = `<span>${completedCount}</span> of <span>${totalCount}</span> completed · <span>${pct}%</span>`;
+
+      videos.forEach(video => {
+        const isDone = !!window.trackerState.completedVideos[video.id];
+        const card = document.createElement("div");
+        card.className = "video-item-card";
+        
+        const badgeHtml = isDone ? `<div class="done-badge">✓ Done</div>` : "";
+        const channelName = getChannelNameForId(video.id);
+
+        card.innerHTML = `
+          <div class="video-thumb-container" onclick="openVideoModal('${video.id}')">
+            ${badgeHtml}
+            <div class="thumb-play-overlay">
+              <div class="play-circle">
+                <svg class="play-icon-svg" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>
+            <img class="video-thumbnail" src="https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg" alt="${video.title}">
+          </div>
+          
+          <div class="video-card-body">
+            <h3 class="video-card-title" onclick="openVideoModal('${video.id}')">${video.title}</h3>
+            <div class="video-card-meta">
+              <span>👤 ${channelName}</span>
+              <span>🕒 ${video.duration}</span>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function getChannelNameForId(id) {
+      if (id.startsWith("py")) return "Python Engineer";
+      if (id.startsWith("wd")) return "Traversy Media";
+      if (id.startsWith("ds")) return "Abdul Bari";
+      if (id.startsWith("ai")) return "freeCodeCamp.org";
+      return "SkillTube Academy";
+    }
+
+    window.handleCardCheckChange = function(videoId, isChecked) {
+      if (typeof window.markComplete === 'function') {
+        window.markComplete(videoId, isChecked);
+        renderWorkspaceGrid();
+      }
+    };
+
+    window.openVideoModal = function(videoId) {
+      const skillData = window.videoData[workspaceSkill];
+      if (!skillData) return;
+      
+      const video = skillData.videos.find(v => v.id === videoId);
+      if (!video) return;
+
+      modalActiveVideoId = videoId;
+      const channel = getChannelNameForId(videoId);
+      
+      document.getElementById("modal-video-title").textContent = video.title;
+      document.getElementById("modal-video-meta").textContent = `Duration: ${video.duration} · Source: ${channel}`;
+      
+      const notes = window.trackerState.videoNotes[videoId] || "";
+      document.getElementById("modal-notes-area").value = notes;
+      
+      document.getElementById("player-modal").classList.add("active");
+
+      // Use YouTube API if ready
+      if (ytApiReady) {
+        if (!ytPlayer) {
+          ytPlayer = new YT.Player('modal-iframe', {
+            videoId: video.youtubeId,
+            playerVars: { 'autoplay': 1, 'rel': 0, 'enablejsapi': 1 },
+            events: {
+              'onStateChange': function(event) {
+                if (event.data === 0) { // ENDED
+                  if (typeof window.markComplete === 'function' && modalActiveVideoId) {
+                    window.markComplete(modalActiveVideoId, true);
+                    renderWorkspaceGrid();
+                    if (typeof showToast === 'function') {
+                      showToast("Class finished! Progress marked automatically.");
+                    }
+                  }
+                }
+              }
+            }
+          });
+        } else {
+          ytPlayer.loadVideoById(video.youtubeId);
+        }
+      } else {
+        // Fallback if API not loaded
+        let iframe = document.getElementById("modal-iframe");
+        if (iframe && iframe.tagName !== "IFRAME") {
+          const newIframe = document.createElement("iframe");
+          newIframe.id = "modal-iframe";
+          newIframe.allowFullscreen = true;
+          newIframe.setAttribute("allow", "autoplay; encrypted-media");
+          iframe.parentNode.replaceChild(newIframe, iframe);
+          iframe = newIframe;
+        }
+        if (iframe) iframe.src = `https://www.youtube.com/embed/${video.youtubeId}?autoplay=1&enablejsapi=1&rel=0`;
+      }
+    };
+
+    let autosaveTimeout = null;
+    window.autosaveNotes = function() {
+      if (!modalActiveVideoId) return;
+      clearTimeout(autosaveTimeout);
+      autosaveTimeout = setTimeout(() => {
+        const notesText = document.getElementById("modal-notes-area").value;
+        if (typeof window.saveNote === 'function') {
+          window.saveNote(modalActiveVideoId, notesText);
+        }
+      }, 1000);
+    };
+
+    window.closeVideoModal = function() {
+      // Force save notes upon closing
+      if (modalActiveVideoId) {
+        const notesText = document.getElementById("modal-notes-area").value;
+        if (typeof window.saveNote === 'function') {
+          window.saveNote(modalActiveVideoId, notesText);
+        }
+      }
+
+      if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+        ytPlayer.stopVideo();
+      } else {
+        const iframe = document.getElementById("modal-iframe");
+        if (iframe && iframe.tagName === "IFRAME") iframe.src = "";
+      }
+      document.getElementById("player-modal").classList.remove("active");
+      modalActiveVideoId = null;
+    };
+
+    window.handleOutsideModalClick = function(event) {
+      const content = document.querySelector(".player-modal-content");
+      if (content && !content.contains(event.target)) {
+        closeVideoModal();
+      }
+    };
+
+    function bindPillClickListeners() {
+      document.getElementById("skill-pills-bar").addEventListener("click", (e) => {
+        const pill = e.target.closest(".skill-pill");
+        if (!pill) return;
+        
+        const skill = pill.getAttribute("data-skill");
+        workspaceSkill = skill;
+        
+        updateUrlParams();
+        updateSelectorsUi();
+        renderWorkspaceGrid();
+      });
+    }
+
+    function updateUrlParams() {
+      const newUrl = `?skill=${workspaceSkill}`;
+      window.history.pushState({}, "", newUrl);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initUrlParams();
+      updateSelectorsUi();
+      bindPillClickListeners();
+      renderWorkspaceGrid();
+      
+      window.addEventListener("stateUpdated", () => {
+        initUrlParams();
+        updateSelectorsUi();
+        renderWorkspaceGrid();
+      });
+    });
+  </script>
+</body>
+</html>

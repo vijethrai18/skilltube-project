@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillUp | Live Preview</title>
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel CDN (for JSX) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide React Icons -->
+    <script src="https://unpkg.com/lucide-react@0.284.0/dist/umd/lucide-react.min.js"></script>
+    <!-- Recharts -->
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <!-- Framer Motion -->
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            primary: '#6366f1',
+                            secondary: '#8b5cf6',
+                            accent: '#ec4899',
+                            dark: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply antialiased text-white bg-[#0f172a] min-h-screen;
+                font-family: 'Outfit', sans-serif;
+                background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            }
+        }
+        @layer components {
+            .glass { @apply bg-white/10 backdrop-blur-md border border-white/10 shadow-xl; }
+            .glass-card { @apply glass rounded-2xl p-6 transition-all duration-300; }
+            .btn-primary { @apply bg-gradient-to-r from-brand-primary to-brand-secondary px-6 py-2.5 rounded-xl font-medium transition-all duration-300 hover:shadow-lg hover:shadow-brand-primary/20 active:scale-95 flex items-center justify-center gap-2; }
+            .nav-link { @apply flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 text-slate-400 hover:text-white hover:bg-white/5; }
+            .nav-link-active { @apply text-white bg-brand-primary/20 border border-brand-primary/20; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { LayoutDashboard, GraduationCap, BarChart2, Trophy, Youtube, Bell, Search, User, Play, Flame, Clock, TrendingUp, ChevronRight, Calendar, ArrowRight, CheckCircle2, Star } = LucideReact;
+        
+        // Robust fallbacks for Recharts
+        const RechartsGlobal = window.Recharts || {};
+        const AreaChart = RechartsGlobal.AreaChart || (({children, data}) => (
+            <div className="h-full w-full flex items-end justify-between gap-2 p-4 bg-white/5 rounded-xl border border-white/5">
+                {(data || []).map((d, i) => (
+                    <div key={i} className="flex flex-col items-center flex-1 h-full justify-end group">
+                        <div className="bg-gradient-to-t from-brand-primary to-brand-secondary rounded-t-md w-full transition-all duration-300 hover:opacity-100 opacity-80" style={{height: `${(d.hours || 0) * 15}%`}} />
+                        <span className="text-[10px] text-slate-500 mt-2">{d.name}</span>
+                    </div>
+                ))}
+            </div>
+        ));
+        const Area = RechartsGlobal.Area || React.Fragment;
+        const XAxis = RechartsGlobal.XAxis || React.Fragment;
+        const YAxis = RechartsGlobal.YAxis || React.Fragment;
+        const CartesianGrid = RechartsGlobal.CartesianGrid || React.Fragment;
+        const Tooltip = RechartsGlobal.Tooltip || React.Fragment;
+        const ResponsiveContainer = RechartsGlobal.ResponsiveContainer || (({children}) => <div className="h-full w-full">{children}</div>);
+        
+        // Robust fallbacks for Framer Motion
+        const Motion = window.FramerMotion || window.Motion || {};
+        const motion = Motion.motion || { 
+            div: React.forwardRef((props, ref) => <div ref={ref} {...props} />),
+            button: React.forwardRef((props, ref) => <button ref={ref} {...props} />)
+        };
+        const AnimatePresence = Motion.AnimatePresence || React.Fragment;
+
+
+        // --- Components ---
+
+        const Sidebar = ({ currentPath, setPath }) => {
+            const navItems = [
+                { icon: 'LayoutDashboard', label: 'Dashboard', path: 'dashboard' },
+                { icon: 'GraduationCap', label: 'Skills', path: 'skills' },
+                { icon: 'BarChart2', label: 'Analytics', path: 'analytics' },
+                { icon: 'Trophy', label: 'Achievements', path: 'achievements' },
+            ];
+
+            return (
+                <aside className="h-full glass border-r border-white/5 flex flex-col p-6 w-64 fixed inset-y-0 hidden lg:flex">
+                    <div className="flex items-center gap-3 mb-10 px-2">
+                        <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center">
+                            <Youtube className="text-white" size={24} />
+                        </div>
+                        <span className="text-xl font-bold tracking-tight">SkillUp</span>
+                    </div>
+                    <nav className="flex-1 space-y-2">
+                        {navItems.map((item) => {
+                            const Icon = LucideReact[item.icon];
+                            return (
+                                <button
+                                    key={item.path}
+                                    onClick={() => setPath(item.path)}
+                                    className={`nav-link w-full text-left flex items-center ${currentPath === item.path ? 'nav-link-active' : ''}`}
+                                >
+                                    <Icon size={20} />
+                                    <span className="font-medium ml-3">{item.label}</span>
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </aside>
+            );
+        };
+
+
+        const Navbar = () => (
+            <header className="h-16 glass sticky top-0 z-40 border-b border-white/5 flex items-center justify-between px-4 md:px-8">
+                <div className="hidden md:flex items-center gap-3 bg-white/5 px-4 py-2 rounded-xl border border-white/5 w-64 lg:w-96">
+                    <Search className="text-slate-400" size={18} />
+                    <input type="text" placeholder="Search courses..." className="bg-transparent border-none outline-none text-sm w-full" />
+                </div>
+                <div className="flex items-center gap-4">
+                    <Bell size={20} className="text-slate-300" />
+                    <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-sm font-semibold">Vikas Kumar</p>
+                            <p className="text-xs text-slate-400">Pro Student</p>
+                        </div>
+                        <div className="w-10 h-10 rounded-full border-2 border-brand-primary p-0.5">
+                            <div className="w-full h-full rounded-full bg-slate-700 flex items-center justify-center overflow-hidden">
+                                <User size={24} className="text-slate-400" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+        );
+
+        // --- Pages ---
+
+        const Dashboard = () => {
+            const data = [
+                { name: 'Mon', hours: 2.5 }, { name: 'Tue', hours: 4 }, { name: 'Wed', hours: 3.5 },
+                { name: 'Thu', hours: 5 }, { name: 'Fri', hours: 2 }, { name: 'Sat', hours: 6 }, { name: 'Sun', hours: 4.5 },
+            ];
+
+            return (
+                <div className="space-y-8 pb-10">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold">Good morning, Vikas! 👋</h1>
+                            <p className="text-slate-400">Here's what's happening today.</p>
+                        </div>
+                        <div className="glass px-4 py-2 rounded-xl flex items-center gap-2">
+                            <Calendar size={18} className="text-brand-primary" />
+                            <span className="text-sm font-medium">October 24, 2023</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {[
+                            { label: 'Videos Completed', value: '42', icon: Play, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+                            { label: 'Learning Streak', value: '12 Days', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+                            { label: 'Weekly Hours', value: '27.5h', icon: Clock, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+                            { label: 'Total Progress', value: '68%', icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-400/10' },
+                        ].map((stat, i) => (
+                            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="glass-card">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-3 rounded-xl ${stat.bg}`}><stat.icon className={stat.color} size={24} /></div>
+                                    <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded-lg">+12%</span>
+                                </div>
+                                <p className="text-slate-400 text-sm">{stat.label}</p>
+                                <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                            </motion.div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 glass-card">
+                            <h3 className="text-lg font-bold mb-8">Learning Activity</h3>
+                            <div className="h-[300px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={data}>
+                                        <defs>
+                                            <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }} />
+                                        <Area type="monotone" dataKey="hours" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorHours)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                        <div className="glass-card">
+                            <h3 className="text-lg font-bold mb-6">Recent Sessions</h3>
+                            <div className="space-y-6">
+                                {[
+                                    { title: 'Advanced React Patterns', skill: 'Web Development', time: '2h ago', icon: '⚛️' },
+                                    { title: 'Binary Search Trees', skill: 'DSA with C++', time: 'Yesterday', icon: '🌲' },
+                                    { title: 'Python List Comprehensions', skill: 'Python Dev', time: '2d ago', icon: '🐍' },
+                                ].map((session, i) => (
+                                    <div key={i} className="flex items-start gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xl">{session.icon}</div>
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-bold">{session.title}</h4>
+                                            <p className="text-xs text-slate-500">{session.skill} • {session.time}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const SkillSelection = ({ setPath }) => {
+            const skills = [
+                { id: 'python', title: 'Python Development', description: 'Master Python from basics to advanced data science and automation.', icon: '🐍', progress: 45, color: 'from-blue-500 to-cyan-500', count: '24 Videos' },
+                { id: 'web-dev', title: 'Web Development', description: 'Build modern responsive websites using React, Node, and Tailwind.', icon: '⚛️', progress: 70, color: 'from-orange-500 to-yellow-500', count: '38 Videos' },
+                { id: 'dsa', title: 'DSA with C++', description: 'Cracking coding interviews with data structures and algorithms.', icon: '🌲', progress: 20, color: 'from-indigo-500 to-purple-500', count: '42 Videos' },
+                { id: 'graphic-design', title: 'Graphic Design', description: 'Master UI/UX principles and design tools like Figma and Photoshop.', icon: '🎨', progress: 0, color: 'from-pink-500 to-rose-500', count: '15 Videos' },
+                { id: 'ai-ml', title: 'AI & Machine Learning', description: 'Learn neural networks, deep learning and AI implementation.', icon: '🧠', progress: 10, color: 'from-green-500 to-emerald-500', count: '29 Videos' }
+            ];
+
+            return (
+                <div className="max-w-7xl mx-auto space-y-8">
+                    <header>
+                        <h1 className="text-3xl font-bold mb-2">Choose Your Skill Track</h1>
+                        <p className="text-slate-400">Select a path to continue your learning journey.</p>
+                    </header>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {skills.map((skill) => (
+                            <div key={skill.id} className="glass-card hover:bg-white/10 hover:-translate-y-1 transition-all group">
+                                <div className="text-3xl mb-4">{skill.icon}</div>
+                                <h3 className="text-xl font-bold mb-3">{skill.title}</h3>
+                                <p className="text-slate-400 text-sm mb-6 line-clamp-2">{skill.description}</p>
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-slate-400">Progress</span>
+                                        <span className="font-bold">{skill.progress}%</span>
+                                    </div>
+                                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                                        <div className="h-full bg-brand-primary" style={{ width: `${skill.progress}%` }} />
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2">
+                                        <span className="text-xs text-slate-500">{skill.count}</span>
+                                        <button onClick={() => setPath('learning')} className="flex items-center gap-2 text-brand-primary font-semibold hover:text-white transition-colors">
+                                            {skill.progress > 0 ? 'Continue' : 'Start Path'} <ArrowRight size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const Analytics = () => {
+            const weeklyData = [
+                { day: 'M', mins: 120 }, { day: 'T', mins: 240 }, { day: 'W', mins: 180 },
+                { day: 'T', mins: 300 }, { day: 'F', mins: 150 }, { day: 'S', mins: 360 }, { day: 'S', mins: 210 },
+            ];
+
+            const heatmapData = Array.from({ length: 24 }, () => 
+                Array.from({ length: 7 }, () => Math.floor(Math.random() * 4))
+            );
+
+            return (
+                <div className="space-y-8 pb-10">
+                    <header>
+                        <h1 className="text-3xl font-bold">Analytics & Insights</h1>
+                        <p className="text-slate-400">Track your growth and learning patterns.</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                            { label: 'Average Daily Focus', value: '3.2 Hours', icon: TrendingUp, color: 'text-brand-primary', bg: 'bg-brand-primary/10' },
+                            { label: 'Focus Streak', value: '12 Days', icon: Flame, color: 'text-orange-400', bg: 'bg-orange-400/10' },
+                            { label: 'Skills Mastered', value: '4 Tracks', icon: Trophy, color: 'text-purple-400', bg: 'bg-purple-400/10' },
+                        ].map((stat, i) => (
+                            <div key={i} className="glass-card flex items-center gap-5">
+                                <div className={`p-3 rounded-xl ${stat.bg}`}><stat.icon className={stat.color} size={24} /></div>
+                                <div>
+                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{stat.label}</p>
+                                    <h3 className="text-2xl font-bold">{stat.value}</h3>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="glass-card">
+                            <h3 className="text-lg font-bold mb-8">Weekly Learning Time (Minutes)</h3>
+                            <div className="h-[250px] flex items-end justify-between gap-3 p-4 bg-white/5 rounded-xl">
+                                {weeklyData.map((d, i) => (
+                                    <div key={i} className="flex flex-col items-center flex-1 h-full justify-end">
+                                        <div className="bg-brand-primary rounded-t-md w-full opacity-80 hover:opacity-100 transition-opacity" style={{height: `${(d.mins / 360) * 100}%`}} />
+                                        <span className="text-xs text-slate-500 mt-2">{d.day}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="glass-card flex flex-col items-center justify-center">
+                            <h3 className="text-lg font-bold mb-8 self-start">Overall Goal Completion</h3>
+                            <div className="relative w-36 h-36 rounded-full border-8 border-brand-primary/30 flex items-center justify-center">
+                                <div className="absolute w-full h-full rounded-full border-8 border-brand-primary border-t-transparent animate-spin-slow" />
+                                <span className="text-3xl font-bold">78%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-card overflow-x-auto">
+                        <h3 className="text-lg font-bold mb-6">Learning Heatmap</h3>
+                        <div className="flex gap-[3px] min-w-[600px]">
+                            {heatmapData.map((week, wIndex) => (
+                                <div key={wIndex} className="flex flex-col gap-[3px]">
+                                    {week.map((day, dIndex) => {
+                                        const colors = ['bg-white/5', 'bg-brand-primary/20', 'bg-brand-primary/50', 'bg-brand-primary'];
+                                        return (
+                                            <div key={dIndex} className={`w-3 h-3 rounded-sm ${colors[day]} hover:scale-125 cursor-pointer transition-transform`} />
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Achievements = () => {
+            const achievements = [
+                { title: 'Early Bird', desc: 'Complete 5 lessons before 8 AM', icon: '☀️', unlocked: true },
+                { title: 'Code Warrior', desc: 'Maintain a 7-day learning streak', icon: '⚔️', unlocked: true },
+                { title: 'Deep Diver', desc: 'Watch a video longer than 60 mins', icon: '🤿', unlocked: false, progress: 80 },
+                { title: 'Mentor', desc: 'Help 5 students in the comments', icon: '🤝', unlocked: false, progress: 0 },
+            ];
+
+            return (
+                <div className="space-y-8 pb-10">
+                    <header>
+                        <h1 className="text-3xl font-bold mb-2">Achievements & Milestones</h1>
+                        <p className="text-slate-400">Your badges and learning progress.</p>
+                    </header>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {achievements.map((item, i) => (
+                            <div key={i} className={`glass-card flex items-start gap-4 border ${item.unlocked ? 'border-brand-primary/30 shadow-lg shadow-brand-primary/5' : 'border-white/5 opacity-80'}`}>
+                                <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-3xl">
+                                    {item.unlocked ? item.icon : '🔒'}
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-sm mb-1">{item.title}</h4>
+                                    <p className="text-xs text-slate-500 mb-3">{item.desc}</p>
+                                    {item.unlocked ? (
+                                        <span className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">UNLOCKED</span>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between text-[10px] font-bold">
+                                                <span className="text-slate-500">Progress</span>
+                                                <span>{item.progress}%</span>
+                                            </div>
+                                            <div className="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                                                <div className="h-full bg-brand-primary" style={{ width: `${item.progress}%` }} />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const Learning = () => {
+            return (
+                <div className="space-y-8 pb-10 max-w-4xl mx-auto">
+                    <div className="glass rounded-3xl overflow-hidden aspect-video relative group w-full">
+                        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video player" frameBorder="0" allowFullScreen className="w-full h-full min-h-[400px]"></iframe>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold">1. Introduction to Semantic HTML</h2>
+                            <p className="text-slate-400">Web Development Course</p>
+                        </div>
+                        <button className="btn-primary">Mark as Completed</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [path, setPath] = useState('dashboard');
+
+            return (
+                <div className="flex min-h-screen">
+                    <Sidebar currentPath={path} setPath={setPath} />
+                    <div className="flex-1 lg:ml-64 flex flex-col">
+                        <Navbar />
+                        <main className="flex-1 p-4 md:p-8">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={path}
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    {path === 'dashboard' && <Dashboard />}
+                                    {path === 'skills' && <SkillSelection setPath={setPath} />}
+                                    {path === 'analytics' && <Analytics />}
+                                    {path === 'achievements' && <Achievements />}
+                                    {path === 'learning' && <Learning />}
+                                </motion.div>
+                            </AnimatePresence>
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+

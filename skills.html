@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="SkillTube Paths - Explore core curriculum paths across Python, Web Dev, DSA, and AI. Track overall progress and review syllabus lessons.">
+  <title>Your Learning Paths - SkillTube</title>
+  <link rel="stylesheet" href="style.css?v=2.0">
+  
+  <style>
+    /* Theme overrides */
+    :root {
+      --bg-dark: #020c1b;
+      --bg-darker: #000814;
+      --bg-card: rgba(10, 25, 47, 0.6);
+      --bg-card-hover: rgba(17, 34, 64, 0.85);
+      --primary: #ff4d4d;
+      --primary-hover: #e63939;
+      --primary-glow: rgba(255, 77, 77, 0.3);
+      --border-color: rgba(255, 255, 255, 0.05);
+      
+      /* Skill Fills */
+      --color-python: #4cc9f0;
+      --color-webdev: #06d6a0;
+      --color-dsa: #ffd166;
+      --color-aiml: #ff8c42;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 50% 0%, rgba(255, 255, 255, 0.05) 0px, transparent 55%),
+        radial-gradient(at 0% 100%, rgba(10, 25, 47, 0.5) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(0, 8, 20, 0.7) 0px, transparent 50%);
+      opacity: 0;
+      transform: translateY(15px);
+      animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Logo Brand */
+    .logo {
+      background: linear-gradient(135deg, #ffffff 40%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+    .logo span {
+      color: var(--primary);
+      -webkit-text-fill-color: initial;
+    }
+
+    /* Skill section card with custom top borders */
+    .skill-path-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: 30px;
+      margin-bottom: 40px;
+      box-shadow: var(--glass-shadow);
+      transition: all var(--transition-normal);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .skill-path-section:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    /* Section Top Border Colors */
+    .skill-path-section.border-python { border-top: 4px solid var(--color-python); }
+    .skill-path-section.border-webdev { border-top: 4px solid var(--color-webdev); }
+    .skill-path-section.border-dsa { border-top: 4px solid var(--color-dsa); }
+    .skill-path-section.border-aiml { border-top: 4px solid var(--color-aiml); }
+
+    /* Section header layout */
+    .path-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .path-title-block {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .path-icon-wrap {
+      width: 54px;
+      height: 54px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      font-size: 2.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .path-title {
+      font-size: 1.6rem;
+      margin: 0;
+      color: var(--text-main);
+    }
+
+    .path-subtitle-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .path-overall-pct-block {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      min-width: 90px;
+    }
+
+    .path-overall-pct {
+      font-family: var(--font-headings);
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .path-overall-ratio {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    /* Syllabus layout */
+    .syllabus-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .path-level-cell {
+      background: #111118;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all var(--transition-fast);
+    }
+
+    .path-level-cell:hover {
+      border-color: rgba(255,255,255,0.08);
+      background: #14141d;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .syllabus-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Glassmorphic Header -->
+  <header>
+    <div class="nav-container">
+      <a href="index.html" class="logo"><span>▶</span> SkillTube</a>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="skills.html" class="active">Skills</a></li>
+          <li><a href="learning.html">Learn</a></li>
+          <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+      </nav>
+      <div class="nav-controls" style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary btn-small" onclick="logout()" style="color: var(--primary); border-color: rgba(255, 77, 77, 0.2);">
+          🚪 Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Body Content -->
+  <main>
+    <!-- Firebase Sync Indicator Banner -->
+    <div class="sync-banner" id="firebase-sync-banner">
+      <div class="sync-status">
+        <span class="sync-dot offline"></span>
+        <span class="sync-text">Local Storage Mode</span>
+      </div>
+    </div>
+
+    <!-- Page Header -->
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">Your Learning Paths</h1>
+        <p class="section-subtitle" style="font-weight: 600; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; color: var(--primary); margin-top: 4px;">
+          All Skills
+        </p>
+      </div>
+      <a href="learning.html" class="btn btn-primary btn-small">Launch Workspace →</a>
+    </div>
+
+    <!-- Skill Sections Grid Stack -->
+    <div id="skills-paths-container" style="display: flex; flex-direction: column;">
+      <!-- Loaded dynamically by JS -->
+      <div class="card" style="text-align: center; padding: 40px; color: var(--text-muted);">
+        Loading curriculum blueprints...
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2026 SkillTube. Designed for continuous developer skill cultivation.</p>
+  </footer>
+
+  <!-- Script Declarations -->
+  <script src="videos.js?v=2.0"></script>
+  <script src="app.js?v=2.1"></script>
+
+  <!-- Interactive Paths Controller -->
+  <script>
+    // Color mapping keys
+    const skillColorHex = {
+      python: "#4cc9f0",
+      webdev: "#06d6a0",
+      dsa: "#ffd166",
+      aiml: "#ff8c42"
+    };
+
+    // Render syllabus lists dynamically
+    function renderSkillsPaths() {
+      const container = document.getElementById("skills-paths-container");
+      if (!container) return;
+      container.innerHTML = "";
+
+      if (!window.videoData) return;
+
+      Object.keys(window.videoData).forEach(skillId => {
+        const data = window.videoData[skillId];
+        const hex = skillColorHex[skillId] || "var(--primary)";
+        const skillOverallPct = typeof window.getProgress === 'function' ? window.getProgress(skillId) : 0;
+        
+        const skillTotalVids = data.videos.length;
+        const skillDoneVids = data.videos.filter(v => window.trackerState.completedVideos[v.id]).length;
+
+        // Build list of video elements
+        let videosHtml = "";
+        data.videos.forEach((video, index) => {
+          const isDone = !!window.trackerState.completedVideos[video.id];
+          const badgeHtml = isDone 
+            ? '<span style="color:#06d6a0; font-weight:700;">✓ Done</span>' 
+            : '<span style="color:var(--text-muted);">Not started</span>';
+          
+          videosHtml += `
+            <div class="path-level-cell">
+              <div style="min-width: 0; flex-grow:1;">
+                <h4 style="font-size:0.9rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#fff;" title="${video.title}">
+                  ${index + 1}. ${video.title}
+                </h4>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                  🕒 ${video.duration} · ${badgeHtml}
+                </div>
+              </div>
+              <a href="learning.html?skill=${skillId}&video=${video.id}" class="btn btn-secondary btn-small" style="padding:6px 12px; font-size:0.75rem; border-color:rgba(255,255,255,0.05); flex-shrink:0;">
+                Play ➔
+              </a>
+            </div>
+          `;
+        });
+
+        // Build Skill section Card
+        const section = document.createElement("section");
+        section.className = `skill-path-section border-${skillId}`;
+        section.innerHTML = `
+          <div class="path-section-header">
+            <div class="path-title-block">
+              <div class="path-icon-wrap">${data.icon}</div>
+              <div>
+                <h2 class="path-title">${data.title}</h2>
+                <div class="path-subtitle-meta">${data.description}</div>
+              </div>
+            </div>
+            
+            <div class="path-overall-pct-block">
+              <span class="path-overall-pct" style="color: ${hex};">${skillOverallPct}%</span>
+              <span class="path-overall-ratio">${skillDoneVids}/${skillTotalVids} completed</span>
+            </div>
+          </div>
+          
+          <div class="progress-container" style="margin-top: 0px; margin-bottom: 24px;">
+            <div class="progress-track" style="height: 8px;">
+              <div class="progress-fill" style="width: ${skillOverallPct}%; background: ${hex};"></div>
+            </div>
+          </div>
+          
+          <h3 style="font-size:1.1rem; font-family:var(--font-headings); margin-bottom:14px; padding-left:4px;">Course Syllabus</h3>
+          <div class="syllabus-grid">
+            ${videosHtml}
+          </div>
+        `;
+        
+        container.appendChild(section);
+      });
+    }
+
+    // Trigger dynamic binding on load
+    window.addEventListener("DOMContentLoaded", () => {
+      renderSkillsPaths();
+
+      // Hook app.js rerender updates
+      window.addEventListener("stateUpdated", () => {
+        renderSkillsPaths();
+      });
+    });
+  </script>
+</body>
+</html>
